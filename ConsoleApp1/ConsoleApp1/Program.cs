@@ -11,12 +11,14 @@ namespace ConsoleApp1
 {
     class Program
     {
-        
+
         static void Main(string[] args)
         {
+            Console.WriteLine("Starting");
             Thread t = new Thread(PrintNumbersWithDelay);
             t.Start();
-            PrintNumbers();
+            t.Join();
+            Console.WriteLine("Thread completed");
         }
 
         static void PrintNumbersWithDelay()
