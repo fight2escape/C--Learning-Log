@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 
 using System.Threading;
+using System.Diagnostics;
 
 namespace ConsoleApp1
 {
@@ -14,21 +15,51 @@ namespace ConsoleApp1
 
         static void Main(string[] args)
         {
-            Console.WriteLine("Starting Program");
-            Thread t1 = new Thread(PrintNumbersWithStatus);
-            Thread t2 = new Thread(DoNothing);
-            Console.WriteLine(t1.ThreadState.ToString());
-            t2.Start();
-            t1.Start();
-            for(int i=1; i<30; ++i)
+            Console.WriteLine("Current thread priority: {0}", Thread.CurrentThread.Priority);
+            Console.WriteLine("Running on all cores available");
+            RunThreads();
+            Thread.Sleep(TimeSpan.FromSeconds(2));
+            Console.WriteLine("Running on a single core");
+            Process.GetCurrentProcess().ProcessorAffinity = new IntPtr(1);
+            RunThreads();
+        }
+
+       
+
+        static void RunThreads()
+        {
+            var sample = new ThreadSample();
+
+            var threadOne = new Thread(sample.CountNumbers);
+            threadOne.Name = "ThreadOne";
+            var threadTwo = new Thread(sample.CountNumbers);
+            threadTwo.Name = "ThreadTwo";
+
+            threadOne.Priority = ThreadPriority.Highest;
+            threadTwo.Priority = ThreadPriority.Lowest;
+            threadOne.Start();
+            threadTwo.Start();
+
+            Thread.Sleep(TimeSpan.FromSeconds(2));
+            sample.Stop();
+        }
+
+        class ThreadSample
+        {
+            private bool _isStopped = false;
+            public void Stop()
             {
-                Console.WriteLine(t1.ThreadState.ToString());
+                _isStopped = true;
             }
-            Thread.Sleep(TimeSpan.FromSeconds(6));
-            t1.Abort();
-            Console.WriteLine("A thread has been aborted");
-            Console.WriteLine(t1.ThreadState.ToString());
-            Console.WriteLine(t2.ThreadState.ToString());
+            public void CountNumbers()
+            {
+                long counter = 0;
+                while (!_isStopped)
+                {
+                    ++counter;
+                }
+                Console.WriteLine("{0} with {1,11} priority has a count = {2, 13}", Thread.CurrentThread.Name, Thread.CurrentThread.Priority, counter.ToString("NO"));
+            }
         }
 
         static void DoNothing()
