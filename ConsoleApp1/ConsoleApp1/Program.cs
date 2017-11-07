@@ -14,11 +14,15 @@ namespace ConsoleApp1
 
         static void Main(string[] args)
         {
-            Console.WriteLine("Starting");
+            Console.WriteLine("Starting Program");
             Thread t = new Thread(PrintNumbersWithDelay);
             t.Start();
-            t.Join();
-            Console.WriteLine("Thread completed");
+            Thread.Sleep(TimeSpan.FromSeconds(6));
+            t.Abort();
+            Console.WriteLine("A thread has been aborted");
+            Thread t2 = new Thread(PrintNumbers);
+            t2.Start();
+            PrintNumbers();
         }
 
         static void PrintNumbersWithDelay()
