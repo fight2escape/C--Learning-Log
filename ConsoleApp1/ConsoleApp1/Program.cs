@@ -18,10 +18,21 @@ namespace ConsoleApp1
         
         static void Main(string[] args)
         {
-            Thread thread1 = new Thread(SaleTicketThread1);
-            Thread thread2 = new Thread(SaleTicketThread2);
-            thread1.Start();
-            thread2.Start();
+            int x = 0;
+            const int iterationNumber = 5000000;
+            Stopwatch sw = Stopwatch.StartNew();
+            for(int i=0; i<iterationNumber; ++i)
+            {
+                ++x;
+            }
+            Console.WriteLine("不使用锁的情况下花费的时间：{0} ms", sw.ElapsedMilliseconds);
+            sw.Restart();
+            for(int i=0; i<iterationNumber; ++i)
+            {
+                Interlocked.Increment(ref x);
+            }
+            Console.WriteLine("使用锁的情况下花费的时间：{0} ms", sw.ElapsedMilliseconds);
+            Console.ReadLine();
         }
 
         private static void SaleTicketThread1()
