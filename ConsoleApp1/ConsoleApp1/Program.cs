@@ -13,22 +13,63 @@ namespace ConsoleApp1
     class Program
     {
 
+        static int tickets = 100;
+        static object gloalObj = new object();
+        
         static void Main(string[] args)
         {
-            //Console.WriteLine("Current thread priority: {0}", Thread.CurrentThread.Priority);
-            //Console.WriteLine("Running on all cores available");
-            //RunThreads();
-            //Thread.Sleep(TimeSpan.FromSeconds(2));
-            //Console.WriteLine("Running on a single core");
-            //Process.GetCurrentProcess().ProcessorAffinity = new IntPtr(1);
-            //RunThreads();
-            Console.WriteLine("主线程运行");
-            CancellationTokenSource cts = new CancellationTokenSource();
-            ThreadPool.QueueUserWorkItem(callback, cts.Token);
-            Console.WriteLine("按下回车来取消计数");
-            Console.Read();
-            cts.Cancel();
-            Console.ReadKey();
+            Thread thread1 = new Thread(SaleTicketThread1);
+            Thread thread2 = new Thread(SaleTicketThread2);
+            thread1.Start();
+            thread2.Start();
+        }
+
+        private static void SaleTicketThread1()
+        {
+            while (true)
+            {
+                try
+                {
+                    Monitor.Enter(gloalObj);
+                    Thread.Sleep(1);
+                    if(tickets > 0)
+                    {
+                        Console.WriteLine("线程1出票：{0}", tickets--);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                finally
+                {
+                    Monitor.Exit(gloalObj);
+                }
+            }
+        }
+
+        private static void SaleTicketThread2()
+        {
+            while (true)
+            {
+                try
+                {
+                    Monitor.Enter(gloalObj);
+                    Thread.Sleep(1);
+                    if(tickets > 0)
+                    {
+                        Console.WriteLine("线程2出票：{0}", tickets--);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                finally
+                {
+                    Monitor.Exit(gloalObj);
+                }
+            }
         }
 
         private static void callback(object state)
