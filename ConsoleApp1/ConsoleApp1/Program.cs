@@ -19,34 +19,47 @@ namespace ConsoleApp1
         
         static void Main(string[] args)
         {
-            Console.WriteLine("Incorrect counter");
-            var c = new Counter();
-            var t1 = new Thread(() => TestCounter(c));
-            var t2 = new Thread(() => TestCounter(c));
-            var t3 = new Thread(() => TestCounter(c));
-            t1.Start();
-            t2.Start();
-            t3.Start();
-            t1.Join();
-            t2.Join();
-            t3.Join();
+            object lock1 = new object();
+            object lock2 = new object();
+            new Thread(() => LockTooMuch(lock1, lock2)).Start();
 
-            Console.WriteLine("Total count {0}", c.Count);
-            Console.WriteLine("------------------------------------");
-            Console.WriteLine("Correct counter");
+            lock (lock2)
+            {
+                Thread.Sleep(1000);
+                Console.WriteLine("Monitor.TryEnter allows not to get stuck, returning false after a specified timeout is elapsed");
+                if(Monitor.TryEnter(lock1, TimeSpan.FromSeconds(5)))
+                {
+                    Console.WriteLine("Acquired a protected resoutce successfully");
+                }
+                else
+                {
+                    Console.WriteLine("Timeout acquiring a resource");
+                }
+            }
+            new Thread(() => LockTooMuch(lock1, lock2)).Start();
 
-            var d = new CounterWithLock();
+            Console.WriteLine("---------------------");
+            lock (lock2)
+            {
+                Console.WriteLine("This will be a deadlock");
+                Thread.Sleep(1000);
+                lock (lock1)
+                {
+                    Console.WriteLine("Acquired a protected resource successfully");
+                }
+            }
+        }
 
-            t1 = new Thread(() => TestCounter(d));
-            t2 = new Thread(() => TestCounter(d));
-            t3 = new Thread(() => TestCounter(d));
-            t1.Start();
-            t2.Start();
-            t3.Start();
-            t1.Join();
-            t2.Join();
-            t3.Join();
-            Console.WriteLine("Total count {0}", c.Count);
+        static void LockTooMuch(object lock1, object lock2)
+        {
+            lock (lock1)
+            {
+                Thread.Sleep(1000);
+                lock (lock2)
+                {
+
+                }
+            }
         }
 
         static void TestCounter(CounterBase c)
