@@ -19,31 +19,81 @@ namespace ConsoleApp1
         
         static void Main(string[] args)
         {
-            var sample = new ThreadSample(10);
-            var threadOne = new Thread(sample.CountNumbers);
-            threadOne.Name = "ThreadOne";
-            threadOne.Start();
-            threadOne.Join();
-            Console.WriteLine("---------------------------");
+            Console.WriteLine("Incorrect counter");
+            var c = new Counter();
+            var t1 = new Thread(() => TestCounter(c));
+            var t2 = new Thread(() => TestCounter(c));
+            var t3 = new Thread(() => TestCounter(c));
+            t1.Start();
+            t2.Start();
+            t3.Start();
+            t1.Join();
+            t2.Join();
+            t3.Join();
 
-            var threadTwo = new Thread(Count);
-            threadTwo.Name = "ThreadTwo";
-            threadTwo.Start(8);
-            threadTwo.Join();
-            Console.WriteLine("-------------------------");
+            Console.WriteLine("Total count {0}", c.Count);
+            Console.WriteLine("------------------------------------");
+            Console.WriteLine("Correct counter");
 
-            var threadThree = new Thread(() => CountNumbers(12));
-            threadThree.Name = "ThreadThree";
-            threadThree.Start();
-            threadThree.Join();
-            Console.WriteLine("---------------------------");
+            var d = new CounterWithLock();
 
-            int i = 10;
-            var threadFour = new Thread(() => PrintNumber(i));
-            i = 20;
-            var threadFive = new Thread(() => PrintNumber(i));
-            threadFour.Start();
-            threadFive.Start();
+            t1 = new Thread(() => TestCounter(d));
+            t2 = new Thread(() => TestCounter(d));
+            t3 = new Thread(() => TestCounter(d));
+            t1.Start();
+            t2.Start();
+            t3.Start();
+            t1.Join();
+            t2.Join();
+            t3.Join();
+            Console.WriteLine("Total count {0}", c.Count);
+        }
+
+        static void TestCounter(CounterBase c)
+        {
+            for(int i=0; i<10000; ++i)
+            {
+                c.Increment();
+                c.Decrement();
+            }
+        }
+
+        class Counter : CounterBase
+        {
+            public int Count { get; private set; }
+            public override void Increment()
+            {
+                ++Count;
+            }
+            public override void Decrement()
+            {
+                --Count;
+            }
+        }
+        class CounterWithLock : CounterBase
+        {
+            private readonly object _syncRoot = new object();
+            public int Count { get; private set; }
+            public override void Increment()
+            {
+                lock (_syncRoot)
+                {
+                    ++Count;
+                }
+            }
+            public override void Decrement()
+            {
+                lock (_syncRoot)
+                {
+                    --Count;
+                }
+            }
+        }
+
+        abstract class CounterBase
+        {
+            public abstract void Increment();
+            public abstract void Decrement();
         }
 
         static void Count(object iterations)
