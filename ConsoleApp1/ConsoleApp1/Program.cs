@@ -19,34 +19,38 @@ namespace ConsoleApp1
         
         static void Main(string[] args)
         {
-            object lock1 = new object();
-            object lock2 = new object();
-            new Thread(() => LockTooMuch(lock1, lock2)).Start();
+            var t = new Thread(FaultyThread);
+            t.Start();
+            t.Join();
 
-            lock (lock2)
+            try
             {
-                Thread.Sleep(1000);
-                Console.WriteLine("Monitor.TryEnter allows not to get stuck, returning false after a specified timeout is elapsed");
-                if(Monitor.TryEnter(lock1, TimeSpan.FromSeconds(5)))
-                {
-                    Console.WriteLine("Acquired a protected resoutce successfully");
-                }
-                else
-                {
-                    Console.WriteLine("Timeout acquiring a resource");
-                }
+                t = new Thread(BadFaultyThread);
+                t.Start();
             }
-            new Thread(() => LockTooMuch(lock1, lock2)).Start();
-
-            Console.WriteLine("---------------------");
-            lock (lock2)
+            catch (Exception ex)
             {
-                Console.WriteLine("This will be a deadlock");
-                Thread.Sleep(1000);
-                lock (lock1)
-                {
-                    Console.WriteLine("Acquired a protected resource successfully");
-                }
+                Console.WriteLine("We won't get here!");
+            }
+        }
+
+        static void BadFaultyThread()
+        {
+            Console.WriteLine("Starting a faulty thread...");
+            Thread.Sleep(TimeSpan.FromSeconds(2));
+            throw new Exception("Boom!");
+        }
+        static void FaultyThread()
+        {
+            try
+            {
+                Console.WriteLine("Startting a faulty thread...");
+                Thread.Sleep(TimeSpan.FromSeconds(1));
+                throw new Exception("Boom!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception handled: {0}", ex.Message);
             }
         }
 
