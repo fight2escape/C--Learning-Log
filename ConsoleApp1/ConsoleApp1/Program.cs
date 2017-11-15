@@ -10,6 +10,7 @@ using System.Diagnostics;
 
 namespace ConsoleApp1
 {
+
     class Program
     {
 
@@ -18,21 +19,33 @@ namespace ConsoleApp1
         
         static void Main(string[] args)
         {
-            int x = 0;
-            const int iterationNumber = 5000000;
-            Stopwatch sw = Stopwatch.StartNew();
-            for(int i=0; i<iterationNumber; ++i)
+            var sampleForeground = new ThreadSample(1);
+            var sampleBackground = new ThreadSample(2);
+            var threadOne = new Thread(sampleForeground.CountNumbers);
+            threadOne.Name = "ForegroundThread";
+            var threadTwo = new Thread(sampleBackground.CountNumbers);
+            threadTwo.Name = "BackgroundThread";
+            threadTwo.IsBackground = true;
+
+            threadOne.Start();
+            threadTwo.Start();
+        }
+
+        class ThreadSample
+        {
+            private readonly int _iterations;
+            public ThreadSample(int iterations)
             {
-                ++x;
+                _iterations = iterations;
             }
-            Console.WriteLine("不使用锁的情况下花费的时间：{0} ms", sw.ElapsedMilliseconds);
-            sw.Restart();
-            for(int i=0; i<iterationNumber; ++i)
+            public void CountNumbers()
             {
-                Interlocked.Increment(ref x);
+                for (int i = 0; i < _iterations; ++i)
+                {
+                    Thread.Sleep(TimeSpan.FromSeconds(0.5));
+                    Console.WriteLine("{0} prints {1}", Thread.CurrentThread.Name, i);
+                }
             }
-            Console.WriteLine("使用锁的情况下花费的时间：{0} ms", sw.ElapsedMilliseconds);
-            Console.ReadLine();
         }
 
         private static void SaleTicketThread1()
@@ -124,41 +137,41 @@ namespace ConsoleApp1
 
        
 
-        static void RunThreads()
-        {
-            var sample = new ThreadSample();
+        //static void RunThreads()
+        //{
+        //    var sample = new ThreadSample();
 
-            var threadOne = new Thread(sample.CountNumbers);
-            threadOne.Name = "ThreadOne";
-            var threadTwo = new Thread(sample.CountNumbers);
-            threadTwo.Name = "ThreadTwo";
+        //    var threadOne = new Thread(sample.CountNumbers);
+        //    threadOne.Name = "ThreadOne";
+        //    var threadTwo = new Thread(sample.CountNumbers);
+        //    threadTwo.Name = "ThreadTwo";
 
-            threadOne.Priority = ThreadPriority.Highest;
-            threadTwo.Priority = ThreadPriority.Lowest;
-            threadOne.Start();
-            threadTwo.Start();
+        //    threadOne.Priority = ThreadPriority.Highest;
+        //    threadTwo.Priority = ThreadPriority.Lowest;
+        //    threadOne.Start();
+        //    threadTwo.Start();
 
-            Thread.Sleep(TimeSpan.FromSeconds(2));
-            sample.Stop();
-        }
+        //    Thread.Sleep(TimeSpan.FromSeconds(2));
+        //    sample.Stop();
+        //}
 
-        class ThreadSample
-        {
-            private bool _isStopped = false;
-            public void Stop()
-            {
-                _isStopped = true;
-            }
-            public void CountNumbers()
-            {
-                long counter = 0;
-                while (!_isStopped)
-                {
-                    ++counter;
-                }
-                Console.WriteLine("{0} with {1,11} priority has a count = {2, 13}", Thread.CurrentThread.Name, Thread.CurrentThread.Priority, counter.ToString("NO"));
-            }
-        }
+        //class ThreadSample
+        //{
+        //    private bool _isStopped = false;
+        //    public void Stop()
+        //    {
+        //        _isStopped = true;
+        //    }
+        //    public void CountNumbers()
+        //    {
+        //        long counter = 0;
+        //        while (!_isStopped)
+        //        {
+        //            ++counter;
+        //        }
+        //        Console.WriteLine("{0} with {1,11} priority has a count = {2, 13}", Thread.CurrentThread.Name, Thread.CurrentThread.Priority, counter.ToString("NO"));
+        //    }
+        //}
 
         static void DoNothing()
         {
